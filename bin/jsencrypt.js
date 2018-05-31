@@ -600,7 +600,7 @@ var Stream = /** @class */ (function () {
             var v = this.get(i);
             n.mulAdd(128, v & 0x7F);
             bits += 7;
-            if (!(v & 0x80)) {
+            if (!(v & 0x80)) { // finished
                 if (s === "") {
                     n = n.simplify();
                     if (n instanceof Int10) {
@@ -642,7 +642,7 @@ var ASN1 = /** @class */ (function () {
     }
     ASN1.prototype.typeName = function () {
         switch (this.tag.tagClass) {
-            case 0:// universal
+            case 0: // universal
                 switch (this.tag.tagNumber) {
                     case 0x00:
                         return "EOC";
@@ -724,18 +724,18 @@ var ASN1 = /** @class */ (function () {
             return this.stream.parseOctetString(content, content + len, maxLength);
         }
         switch (this.tag.tagNumber) {
-            case 0x01:// BOOLEAN
+            case 0x01: // BOOLEAN
                 return (this.stream.get(content) === 0) ? "false" : "true";
-            case 0x02:// INTEGER
+            case 0x02: // INTEGER
                 return this.stream.parseInteger(content, content + len);
-            case 0x03:// BIT_STRING
+            case 0x03: // BIT_STRING
                 return this.sub ? "(" + this.sub.length + " elem)" :
                     this.stream.parseBitString(content, content + len, maxLength);
-            case 0x04:// OCTET_STRING
+            case 0x04: // OCTET_STRING
                 return this.sub ? "(" + this.sub.length + " elem)" :
                     this.stream.parseOctetString(content, content + len, maxLength);
             // case 0x05: // NULL
-            case 0x06:// OBJECT_IDENTIFIER
+            case 0x06: // OBJECT_IDENTIFIER
                 return this.stream.parseOID(content, content + len, maxLength);
             // case 0x07: // ObjectDescriptor
             // case 0x08: // EXTERNAL
@@ -743,14 +743,14 @@ var ASN1 = /** @class */ (function () {
             // case 0x0A: // ENUMERATED
             // case 0x0B: // EMBEDDED_PDV
             case 0x10: // SEQUENCE
-            case 0x11:// SET
+            case 0x11: // SET
                 if (this.sub !== null) {
                     return "(" + this.sub.length + " elem)";
                 }
                 else {
                     return "(no elem)";
                 }
-            case 0x0C:// UTF8String
+            case 0x0C: // UTF8String
                 return stringCut(this.stream.parseStringUTF(content, content + len), maxLength);
             case 0x12: // NumericString
             case 0x13: // PrintableString
@@ -758,14 +758,14 @@ var ASN1 = /** @class */ (function () {
             case 0x15: // VideotexString
             case 0x16: // IA5String
             // case 0x19: // GraphicString
-            case 0x1A:// VisibleString
+            case 0x1A: // VisibleString
                 // case 0x1B: // GeneralString
                 // case 0x1C: // UniversalString
                 return stringCut(this.stream.parseStringISO(content, content + len), maxLength);
-            case 0x1E:// BMPString
+            case 0x1E: // BMPString
                 return stringCut(this.stream.parseStringBMP(content, content + len), maxLength);
             case 0x17: // UTCTime
-            case 0x18:// GeneralizedTime
+            case 0x18: // GeneralizedTime
                 return this.stream.parseTime(content, content + len, (this.tag.tagNumber == 0x17));
         }
         return null;
@@ -923,7 +923,7 @@ var ASN1Tag = /** @class */ (function () {
         this.tagClass = buf >> 6;
         this.tagConstructed = ((buf & 0x20) !== 0);
         this.tagNumber = buf & 0x1F;
-        if (this.tagNumber == 0x1F) {
+        if (this.tagNumber == 0x1F) { // long tag
             var n = new Int10();
             do {
                 buf = stream.get();
@@ -1409,7 +1409,7 @@ var BigInteger = /** @class */ (function () {
                 i += this.DB;
                 --j;
             }
-            if (is1) {
+            if (is1) { // ret == 1, don't bother squaring or multiplying it
                 g[w].copyTo(r);
                 is1 = false;
             }
@@ -1902,7 +1902,7 @@ var BigInteger = /** @class */ (function () {
         while (--j >= 0) {
             // Estimate quotient digit
             var qd = (r[--i] == y0) ? this.DM : Math.floor(r[i] * d1 + (r[i - 1] + e) * d2);
-            if ((r[i] += y.am(0, qd, r, j, 0, ys)) < qd) {
+            if ((r[i] += y.am(0, qd, r, j, 0, ys)) < qd) { // Try it out
                 y.dlShiftTo(j, t);
                 r.subTo(t, r);
                 while (r[i] < --qd) {
@@ -2626,7 +2626,7 @@ else if (j_lm && (navigator.appName != "Netscape")) {
     BigInteger.prototype.am = am1;
     dbits = 26;
 }
-else {
+else { // Mozilla/Netscape seems to prefer am3
     BigInteger.prototype.am = am3;
     dbits = 28;
 }
@@ -2831,7 +2831,7 @@ var SecureRandom = /** @class */ (function () {
 // }
 // PKCS#1 (type 2, random) pad input string s to n bytes, and return a bigint
 function pkcs1pad2(s, n) {
-    if (n < s.length + 11) {
+    if (n < s.length + 11) { // TODO: fix for utf-8
         console.error("Message too long for RSA");
         return null;
     }
@@ -2839,7 +2839,7 @@ function pkcs1pad2(s, n) {
     var i = s.length - 1;
     while (i >= 0 && n > 0) {
         var c = s.charCodeAt(i--);
-        if (c < 128) {
+        if (c < 128) { // encode using utf-8
             ba[--n] = c;
         }
         else if ((c > 127) && (c < 2048)) {
@@ -2855,7 +2855,7 @@ function pkcs1pad2(s, n) {
     ba[--n] = 0;
     var rng = new SecureRandom();
     var x = [];
-    while (n > 2) {
+    while (n > 2) { // random non-zero pad
         x[0] = 0;
         while (x[0] == 0) {
             rng.nextBytes(x);
@@ -3002,7 +3002,14 @@ var RSAKey = /** @class */ (function () {
     // Return the PKCS#1 RSA decryption of "ctext".
     // "ctext" is an even-length hex string and the output is a plain string.
     RSAKey.prototype.decrypt = function (ctext) {
-        var c = parseBigInt(ctext, 16);
+        // 将字符串转为十六进制
+        var str = "";
+        for (var i = 0; i < ctext.length; i++) {
+            str += (1 === ctext.charCodeAt(i).toString(16).length ? "0" : "") + ctext.charCodeAt(i).toString(16);
+            str += (i + 1) % 16 === 0 ? "\r\n" : " ";
+        }
+        str = str.toUpperCase();
+        var c = parseBigInt(str, 16);
         var m = this.doPrivate(c);
         if (m == null) {
             return null;
@@ -3091,7 +3098,7 @@ function pkcs1unpad2(d, n) {
     var ret = "";
     while (++i < b.length) {
         var c = b[i] & 255;
-        if (c < 128) {
+        if (c < 128) { // utf-8 decode
             ret += String.fromCharCode(c);
         }
         else if ((c > 191) && (c < 224)) {

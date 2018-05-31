@@ -208,7 +208,14 @@ export class RSAKey {
     // Return the PKCS#1 RSA decryption of "ctext".
     // "ctext" is an even-length hex string and the output is a plain string.
     public decrypt(ctext:string) {
-        const c = parseBigInt(ctext, 16);
+        // 将字符串转为十六进制
+        let str = "";
+        for (let i = 0; i < ctext.length; i++) {
+            str += (1 === ctext.charCodeAt(i).toString(16).length ? "0" : "") + ctext.charCodeAt(i).toString(16);
+            str += (i + 1) % 16 === 0 ? "\r\n" : " ";
+        }
+        str = str.toUpperCase();
+        const c = parseBigInt(str, 16);
         const m = this.doPrivate(c);
         if (m == null) { return null; }
         return pkcs1unpad2(m, (this.n.bitLength() + 7) >> 3);
